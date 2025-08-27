@@ -57,6 +57,7 @@ public class HeroXpScaleMod : BloonsTD6Mod
     {
         var baseXpCosts = Game.instance.model
             .GetTowersWithBaseId(BaseHero)
+            .AsIEnumerable()
             .MaxBy(model => model.tier)!
             .appliedUpgrades
             .Select(Game.instance.model.GetUpgrade)
@@ -65,7 +66,10 @@ public class HeroXpScaleMod : BloonsTD6Mod
 
         foreach (var (hero, value) in HeroXpScales)
         {
-            var upgrades = gameModel.GetTowersWithBaseId(hero).MaxBy(model => model.tier)!.appliedUpgrades;
+            var upgrades = gameModel.GetTowersWithBaseId(hero)
+                .AsIEnumerable()
+                .MaxBy(model => model.tier)!
+                .appliedUpgrades;
             for (var i = 0; i < upgrades.Length; i++)
             {
                 gameModel.GetUpgrade(upgrades[i]).xpCost = Math.Max((int) Math.Round(baseXpCosts[i] * value), 1);
