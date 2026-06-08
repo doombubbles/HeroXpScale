@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 
 [assembly: MelonInfo(typeof(HeroXpScaleMod), ModHelperData.Name, ModHelperData.Version, ModHelperData.RepoOwner)]
 [assembly: MelonGame("Ninja Kiwi", "BloonsTD6")]
+[assembly: MelonGame("Ninja Kiwi", "BloonsTD6-Epic")]
 
 namespace HeroXpScale;
 

@@ -1,3 +1,6 @@
+# This workflow file is automatically updated by Mod Helper via btd6.targets using info from your project and ModHelperData
+# If you don't want a GitHub actions workflow, you can delete this file and it won't be regenerated
+# If you want Mod Helper to not overwrite any manual changes to this file, set <GenerateActionsWorkflow>false</GenerateActionsWorkflow>
 name: Build
 
 on:
@@ -9,9 +12,11 @@ on:
 
 env:
   PROJECT_NAME: HeroXpScale
-  
-  MOD_HELPER_NAME: Btd6ModHelper
+  DLL_NAME: HeroXpScale.dll
+
   BLOONSTD6: ./BloonsTD6
+  MOD_HELPER_NAME: Btd6ModHelper
+  MOD_HELPER_REPO: gurrenm3/BTD-Mod-Helper
 
 jobs:
   build:
@@ -68,11 +73,9 @@ jobs:
         if: env.MOD_HELPER_BRANCH == ''
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          repository: gurrenm3/BTD-Mod-Helper
+          repository: ${{ env.MOD_HELPER_REPO }}
           fileName: ${{ env.MOD_HELPER_NAME }}.dll
           out-file-path: ${{ env.BLOONSTD6 }}/Mods/
-          tarBall: false
-          zipBall: false
           latest: true
 
 
@@ -84,7 +87,7 @@ jobs:
           workflow: build.yml
           name: ${{ env.MOD_HELPER_NAME }}.dll
           branch: ${{ env.MOD_HELPER_BRANCH }}
-          repo: gurrenm3/BTD-Mod-Helper
+          repo: ${{ env.MOD_HELPER_REPO }}
           path: ${{ env.BLOONSTD6 }}/Mods/
 
 
@@ -94,30 +97,40 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
             choco install -y wget
           fi
-          wget https://raw.githubusercontent.com/gurrenm3/BTD-Mod-Helper/master/BloonsTD6%20Mod%20Helper/btd6.targets
+          wget https://raw.githubusercontent.com/${{ env.MOD_HELPER_REPO }}/master/BloonsTD6%20Mod%20Helper/btd6.targets
 
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
-
+          dotnet-version: 10.0.x
 
       - name: Build
         run: dotnet build -c Release -p:BloonsTD6="../${{ env.BLOONSTD6 }}" "${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}.csproj"
 
-
       - name: Upload Mod DLL
+        if: ${{ env.ACT != 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PROJECT_NAME }}.dll
-          path: ${{ env.BLOONSTD6 }}/Mods/${{ env.PROJECT_NAME }}.dll
+          name: ${{ env.DLL_NAME }}
+          path: ${{ env.BLOONSTD6 }}/Mods/${{ env.DLL_NAME }}
 
+
+      - name: Changelog
+        id: changelog
+        if: startsWith(github.ref, 'refs/tags/') && hashFiles(format('{0}/CHANGELOG.md', env.PROJECT_NAME)) != '' && hashFiles(format('{0}/LATEST.md', env.PROJECT_NAME)) == ''
+        uses: mindsers/changelog-reader-action@v2.4.0
+        with:
+          version: ${{ github.ref_name }}
+          path: ${{ env.PROJECT_NAME }}/CHANGELOG.md
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ${{ env.BLOONSTD6 }}/Mods/${{ env.PROJECT_NAME }}.dll
-          body_path: ${{ env.PROJECT_NAME }}/LATEST.md
+          files: ${{ env.BLOONSTD6 }}/Mods/${{ env.DLL_NAME }}
+          body_path: ${{ hashFiles(format('{0}/LATEST.md', env.PROJECT_NAME)) != '' && format('{0}/LATEST.md', env.PROJECT_NAME) || '' }}
+          body: ${{ steps.changelog.outputs.changes }}
+          generate_release_notes: ${{ hashFiles(format('{0}/LATEST.md', env.PROJECT_NAME)) == '' && hashFiles(format('{0}/CHANGELOG.md', env.PROJECT_NAME)) == '' }}
           fail_on_unmatched_files: true
+          draft: ${{ env.ACT == 'true' }}
