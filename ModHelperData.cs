@@ -9,5 +9,6 @@ public static class ModHelperData
     public const string Description = "Lets you configure the XP Scales for BTD6 Heroes";
 
     public const string RepoOwner = "doombubbles";
-    public const string RepoName = "hero-xp-scale";
+    public const string PrevRepoName = "hero-xp-scale";
+    public const string RepoName = "HeroXpScale";
 }
